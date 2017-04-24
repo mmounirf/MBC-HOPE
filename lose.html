@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>You Lose</title>
+		<meta charset="utf-8">
+		<link href="./styles/bootstrap.min.css" rel="stylesheet" type="text/css">
+		<link href="./styles/style.css" rel="stylesheet" type="text/css">
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+		<script src="./js/jquery.min.js"></script>
+		<script>if (window.module) module = window.module;</script>
+	</head>
+	<body>
+		<div class="logos">
+			<div class="wfp"></div>
+			<div class="mbc"></div>
+		</div>
+		<div id="container" class="winPage">
+			<div class="content">
+				<h1 class="result lose">you lose!</h1>
+				<h1 class="desc">Your smile didn't reach out for 100%</h1>
+				<div class="progressText loseProgress">
+						<h1 class="steps">0</h1>
+						<h1 class="stepsText">steps taken so far</h1>
+				</div>
+			</div>
+		</div>
+
+		<script>
+		var steps = localStorage.getItem("steps", steps);
+		$('.steps').text(steps);
+		setTimeout(function(){
+			window.location.href = "./index.html";
+		}, 3000);
+		</script>
+
+	</body>
+</html>

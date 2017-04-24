@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<title>MBC</title>
+		<meta charset="utf-8">
+		<link href="./styles/bootstrap.min.css" rel="stylesheet" type="text/css">
+		<link href="./styles/style.css" rel="stylesheet" type="text/css">
+		<script>if (typeof module === 'object') {window.module = module; module = undefined;}</script>
+		<script src="./js/utils.js"></script>
+		<script src="./js/clmtrackr.js"></script>
+		<script src="./models/model_pca_20_svm_emotionDetection.js"></script>
+		<script src="./js/emotion_classifier.js"></script>
+		<script src="./js/emotionmodel.js"></script>
+		<script src="./js/jquery.min.js"></script>
+		<script>if (window.module) module = window.module;</script>
+	</head>
+	<body>
+		<div class="logos">
+			<div class="wfp"></div>
+			<div class="mbc"></div>
+		</div>
+
+			<div id="container">
+
+				<div class="progressContainer">
+
+					<div class="progress">
+						<span class="progressValue"></span>
+						<span class="progressBar"></span>
+					</div>
+					<div class="progressText">
+						<h1 class="steps">0</h1>
+						<h1 class="stepsText">steps taken so far</h1>
+					</div>
+				</div>
+				<video id="videoel" width="400" height="300" preload="auto" loop></video>
+				<canvas id="overlay" width="400" height="300"></canvas>
+			</div>
+
+
+
+
+		<script>
+			var vid = document.getElementById('videoel');
+			var overlay = document.getElementById('overlay');
+			var overlayCC = overlay.getContext('2d');
+			function numberWithCommas(x) {
+			    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+			}
+			navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia || navigator.msGetUserMedia;
+			window.URL = window.URL || window.webkitURL || window.msURL || window.mozURL;
+
+			// check for camerasupport
+			if (navigator.getUserMedia) {
+				// set up stream
+
+				var videoSelector = {video : true};
+				if (window.navigator.appVersion.match(/Chrome\/(.*?) /)) {
+					var chromeVersion = parseInt(window.navigator.appVersion.match(/Chrome\/(\d+)\./)[1], 10);
+					if (chromeVersion < 20) {
+						videoSelector = "video";
+					}
+				};
+
+				navigator.getUserMedia(videoSelector, function( stream ) {
+					if (vid.mozCaptureStream) {
+						vid.mozSrcObject = stream;
+					} else {
+						vid.src = (window.URL && window.URL.createObjectURL(stream)) || stream;
+					}
+					vid.play();
+				}, function() {
+					//insertAltVideo(vid);
+					alert("There was some problem trying to fetch video from your webcam. If you have a webcam, please make sure to accept when the browser asks for access to your webcam.");
+				});
+			} else {
+				//insertAltVideo(vid);
+				alert("This demo depends on getUserMedia, which your browser does not seem to support. :(");
+			}
+
+
+
+			/*********** setup of emotion detection *************/
+
+		var smileValue;
+		var steps = 0;
+		if(!localStorage.steps){
+		localStorage.setItem("steps", 0);
+		var steps = parseInt(localStorage.getItem("steps"));
+		$('.steps').text(steps);
+		}else{
+		var steps = parseInt(localStorage.getItem("steps"));
+		$('.steps').text(steps);
+		}
+			var ctrack = new clm.tracker({useWebGL : true});
+			ctrack.init(pModel);
+			document.addEventListener('DOMContentLoaded', function() {
+				vid.play();
+				ctrack.start(vid);
+				drawLoop();
+			}, false);
+
+
+			function drawLoop() {
+				requestAnimFrame(drawLoop);
+				overlayCC.clearRect(0, 0, 400, 300);
+				if (ctrack.getCurrentPosition()) {
+					//ctrack.draw(overlay);
+				}
+				var cp = ctrack.getCurrentParameters();
+				var er = ec.meanPredict(cp);
+
+				if(er){
+					var smile = er[3].value;
+					switch (true) {
+						case (smile<0.1):
+							var newWidth = 0;
+						break;
+						case (smile<0.2):
+							var newWidth = 12;
+						break;
+						case (smile<0.3):
+							var newWidth = 24;
+						break;
+						case (smile<0.4):
+							var newWidth = 36;
+						break;
+						case (smile<0.5):
+						// var timeleft = 10;
+						// var downloadTimer = setInterval(function(){
+						//   console.log(10 - --timeleft);
+						// 	$('.counter').text(timeleft);
+						//   if(timeleft <= 0)
+						//     clearInterval(downloadTimer);
+						// },1000);
+						// return;
+						var newWidth = 48;
+
+
+						break;
+						case (smile<0.6):
+							var newWidth = 60;
+						break;
+						case (smile<0.7):
+							var newWidth = 72;
+							setTimeout(function(){
+								localStorage.setItem("steps", steps);
+								window.location.href = "./lose.html";
+							}, 10000);
+						break;
+						case (smile<0.8):
+							var newWidth = 84;
+						break;
+						case (smile>0.8):
+						var newWidth = 100;
+						$('.progressValue').css('width', newWidth+'%');
+							window.location.href = "./win.html";
+							return;
+							break;
+						default:
+					}
+		console.log(newWidth);
+		$('.progressValue').css('width', newWidth+'%');
+
+
+				}
+			}
+
+			var ec = new emotionClassifier();
+			ec.init(emotionModel);
+			var emotionData = ec.getBlank().pop();
+
+
+		</script>
+	</body>
+</html>
